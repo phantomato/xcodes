@@ -110,7 +110,7 @@ public class RuntimeInstaller {
         switch matchedRuntime.contentType {
             case .package:
                 try await installFromPackage(dmgUrl: dmgUrl, runtime: matchedRuntime)
-            case .diskImage:
+            case .diskImage, .cryptexDiskImage:
                 try await installFromImage(dmgUrl: dmgUrl)
         }
         if shouldDelete {
@@ -183,7 +183,7 @@ public class RuntimeInstaller {
 
     @MainActor
     public func downloadOrUseExistingArchive(runtime: DownloadableRuntime, to destinationDirectory: Path, downloader: Downloader) async throws -> URL {
-        let url = URL(string: runtime.source)!
+        let url = runtime.sourceURL
         let destination = destinationDirectory/url.lastPathComponent
         let aria2DownloadMetadataPath = destination.parent/(destination.basename() + ".aria2")
         var aria2DownloadIsIncomplete = false
@@ -202,9 +202,7 @@ public class RuntimeInstaller {
             Current.logging.log("Found existing Runtime that will be used, at \(destination).")
             return destination.url
         }
-        if runtime.authentication == .virtual {
-            try await sessionService.validateADCSession(path: url.path).async()
-        }
+        try await sessionService.validateADCSession(path: url.path).async()
         let formatter = NumberFormatter(numberStyle: .percent)
         var observation: NSKeyValueObservation?
         let result = try await downloader.download(url: url, to: destination, progressChanged: { progress in

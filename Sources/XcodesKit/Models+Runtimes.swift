@@ -11,7 +11,7 @@ struct DownloadableRuntimesResponse: Decodable {
 public struct DownloadableRuntime: Decodable {
     let category: Category
     let simulatorVersion: SimulatorVersion
-    let source: String
+    let source: String?
     let dictionaryVersion: Int
     let contentType: ContentType
     let platform: Platform
@@ -36,6 +36,17 @@ public struct DownloadableRuntime: Decodable {
     var visibleIdentifier: String {
         return platform.shortName + " " + completeVersion
     }
+
+    var sourceURL: URL {
+        source.flatMap(URL.init) ?? makeRuntimeURL(runtimeName: name)
+    }
+}
+
+let xcodeRuntimesFallbackURL = URL(string: "https://download.developer.apple.com/Developer_Tools/")!
+
+func makeRuntimeURL(runtimeName: String) -> URL {
+    let baseName = runtimeName.replacingOccurrences(of: ".0 ", with: " ").replacingOccurrences(of: " ", with: "_")
+    return xcodeRuntimesFallbackURL.appendingPathComponent("\(baseName)/\(baseName).dmg")
 }
 
 func makeVersion(for osVersion: String, betaNumber: Int?) -> String {
@@ -79,6 +90,7 @@ extension DownloadableRuntime {
     enum ContentType: String, Decodable {
         case diskImage = "diskImage"
         case package = "package"
+        case cryptexDiskImage = "cryptexDiskImage"
     }
 
     enum Platform: String, Decodable {
