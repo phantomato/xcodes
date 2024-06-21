@@ -50,14 +50,10 @@ notarize: zip
 # E.g.
 # make bottle VERSION=0.4.0
 .PHONY: bottle
-bottle: sign
-	@rm -r xcodes 2> /dev/null || true
-	@rm *.tar.gz 2> /dev/null || true
-	@mkdir -p xcodes/$(VERSION)/bin
-	@cp "$(RELEASEBUILDDIR)" xcodes/$(VERSION)/bin
-	@tar -zcvf xcodes-$(VERSION).mojave.bottle.tar.gz -C "$(REPODIR)" xcodes
-	shasum -a 256 xcodes-$(VERSION).mojave.bottle.tar.gz | cut -f1 -d' '
-	@open -R xcodes-$(VERSION).mojave.bottle.tar.gz
+bottle: xcodes
+	@rm xcodes-*.zip 2> /dev/null || true
+	@zip --junk-paths xcodes-$(VERSION).zip "$(RELEASEBUILDDIR)"
+	shasum -a 256 xcodes-$(VERSION).zip
 
 .PHONY: install
 install: xcodes
